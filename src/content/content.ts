@@ -1,0 +1,1 @@
+console.log("Second Brain content script loaded");

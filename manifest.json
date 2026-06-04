@@ -2,15 +2,22 @@
   "manifest_version": 3,
   "name": "Second Brain",
   "version": "0.1.0",
-  "description": "AI-powered semantic bookmark manager",
+  "description": "AI-powered bookmark manager",
+
   "permissions": [
     "storage",
-    "activeTab",
-    "tabs"
+    "tabs",
+    "activeTab"
   ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
   "action": {
-    "default_popup": "popup.html"
+    "default_title": "Second Brain"
   },
+
   "background": {
     "service_worker": "background.js"
   }
