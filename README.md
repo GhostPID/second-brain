@@ -28,15 +28,6 @@ Instead of remembering URLs, you can simply ask:
 - Local Storage / IndexedDB
 - AI-powered retrieval pipeline
 
-## Use Cases
-
-Examples of supported queries:
-
-- Find the React Hooks article I saved
-- Show me Linux resources about memory management
-- Find AI websites related to neural networks
-- Open the psychology article I saved last week
-
 ## 🚀 Installation
 
 ### Clone Repository
