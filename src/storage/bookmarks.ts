@@ -15,19 +15,20 @@ export function getBookmarks(): Bookmark[] {
 export function saveBookmark(bookmark: Bookmark) {
   const bookmarks = getBookmarks();
 
+  const exists = bookmarks.some(
+    b => b.url === bookmark.url
+  );
+
+  if (exists) {
+    return;
+  }
+
   bookmarks.unshift(bookmark);
 
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify(bookmarks)
   );
-  const exists = bookmarks.some(
-  b => b.url === bookmark.url
-  );
-
-  if (exists) {
-  return;
-  }
 }
 
 export function deleteBookmark(id: string) {

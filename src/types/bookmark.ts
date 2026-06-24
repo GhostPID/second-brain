@@ -5,4 +5,5 @@ export type Bookmark = {
   favicon?: string;
   content: string;
   createdAt: number;
+  tags: string[];
 };

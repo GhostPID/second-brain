@@ -1,3 +1,5 @@
+import { extractTags } from "./utils/extractTags"; 
+import { searchBookmarks } from "./search/fuzzySearch"; //Fuse.js
 import { useEffect, useState } from "react";
 import type { Bookmark } from "./types/bookmark";
 import {
@@ -9,6 +11,8 @@ import {
 export default function App() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedTag, setSelectedTag] =
+  useState<string | null>(null);
 
   function loadBookmarks() {
     setBookmarks(getBookmarks());
@@ -17,7 +21,7 @@ export default function App() {
   useEffect(() => {
     loadBookmarks();
   }, []);
-
+  
  async function handleAddBookmark() {
   const tabs = await chrome.tabs.query({
     active: true,
@@ -42,14 +46,18 @@ export default function App() {
   if (!currentTab?.url) {
     return;
   }
-
+   const tags = extractTags(
+  currentTab.title || "",
+  content
+  );
   const bookmark: Bookmark = {
-  id: crypto.randomUUID(),
-  title: currentTab.title || "Untitled",
-  url: currentTab.url,
-  favicon: currentTab.favIconUrl,
-  content,
-  createdAt: Date.now(),
+    id: crypto.randomUUID(),
+    title: currentTab.title || "Untitled",
+    url: currentTab.url,
+    favicon: currentTab.favIconUrl,
+    content,
+    tags,
+    createdAt: Date.now(),
   };
 
   saveBookmark(bookmark);
@@ -60,18 +68,13 @@ export default function App() {
     loadBookmarks();
   }
 
-  const filteredBookmarks = bookmarks.filter(
-  (bookmark) =>
-    bookmark.title
-      .toLowerCase()
-      .includes(search.toLowerCase()) ||
-    bookmark.url
-      .toLowerCase()
-      .includes(search.toLowerCase()) ||
-    bookmark.content
-      .toLowerCase()
-      .includes(search.toLowerCase())
-   );
+  const filteredBookmarks = searchBookmarks(
+    bookmarks,
+    search
+  ).filter(bookmark =>
+    !selectedTag ||
+    (bookmark.tags ?? []).includes(selectedTag)
+  );
 
   return (
     <div
@@ -127,16 +130,43 @@ export default function App() {
                {bookmark.url}
               </a>
               <div
-              style={{
-              fontSize: "12px",
-              opacity: 0.7,
-              marginTop: "4px"
-            }}
-            >
-            {bookmark.content
-            ? bookmark.content.slice(0, 120)
-            : "No content extracted"}...
-            </div>
+                style={{
+                  fontSize: "12px",
+                  opacity: 0.7,
+                  marginTop: "4px"
+                }}
+              >
+                {bookmark.content
+                  ? bookmark.content.slice(0, 120)
+                  : "No content extracted"}...
+              </div>
+
+              <div
+                style={{
+                  marginTop: "8px",
+                  display: "flex",
+                  gap: "6px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {(bookmark.tags ?? []).map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => setSelectedTag(tag)}
+                  style={{
+                    background: "#222",
+                    color: "#fff",
+                    border: "none",
+                    padding: "4px 8px",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                  }}
+                >
+                  {tag}
+                </button>
+                ))}
+              </div>
 
               <button
                 onClick={() =>
@@ -145,6 +175,28 @@ export default function App() {
               >
                 Delete
               </button>
+              
+              {selectedTag && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  marginBottom: "10px",
+                }}
+              >
+                Filtering by:
+
+                <button
+                  onClick={() =>
+                    setSelectedTag(null)
+                  }
+                  style={{
+                    marginLeft: "8px",
+                  }}
+                >
+                  {selectedTag} ✕
+                </button>
+              </div>
+            )}
             </div>
           ))
         )}
