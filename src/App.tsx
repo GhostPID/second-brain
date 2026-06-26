@@ -1,26 +1,22 @@
 import { extractTags } from "./utils/extractTags"; 
 import { searchBookmarks } from "./search/fuzzySearch"; //Fuse.js
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Bookmark } from "./types/bookmark";
-import {
-  getBookmarks,
-  saveBookmark,
-  deleteBookmark,
-} from "./storage/bookmarks";
+import { useBookmarks } from "./hooks/useBookmarks";
+import BookmarkCard from "./components/BookmarkCard";
+import ChatPanel from "./chat/ChatPanel";
+
 
 export default function App() {
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] =
   useState<string | null>(null);
 
-  function loadBookmarks() {
-    setBookmarks(getBookmarks());
-  }
-
-  useEffect(() => {
-    loadBookmarks();
-  }, []);
+  const {
+    bookmarks,
+    add,
+    remove,
+} = useBookmarks();
   
  async function handleAddBookmark() {
   const tabs = await chrome.tabs.query({
@@ -60,12 +56,10 @@ export default function App() {
     createdAt: Date.now(),
   };
 
-  saveBookmark(bookmark);
-  loadBookmarks();
+  await add(bookmark);
  }
-  function handleDelete(id: string) {
-    deleteBookmark(id);
-    loadBookmarks();
+  async function handleDelete(id: string) {
+    await remove(id);
   }
 
   const filteredBookmarks = searchBookmarks(
@@ -105,101 +99,48 @@ export default function App() {
         }}
       />
 
+      {selectedTag && (
+        <div
+          style={{
+            marginTop: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          Filtering by:
+
+          <button
+            onClick={() => setSelectedTag(null)}
+            style={{
+              marginLeft: "8px",
+            }}
+          >
+            {selectedTag} ✕
+          </button>
+        </div>
+      )}
+
       <div style={{ marginTop: "20px" }}>
         {filteredBookmarks.length === 0 ? (
           <p>No bookmarks found.</p>
         ) : (
           filteredBookmarks.map((bookmark) => (
-            <div
+            <BookmarkCard
               key={bookmark.id}
-              style={{
-                border: "1px solid #333",
-                padding: "10px",
-                marginBottom: "10px",
-                borderRadius: "8px",
-              }}
-            >
-              <strong>{bookmark.title}</strong>
-
-              <a
-               href={bookmark.url}
-               target="_blank"
-               rel="noreferrer"
-               
-              >
-               {bookmark.url}
-              </a>
-              <div
-                style={{
-                  fontSize: "12px",
-                  opacity: 0.7,
-                  marginTop: "4px"
-                }}
-              >
-                {bookmark.content
-                  ? bookmark.content.slice(0, 120)
-                  : "No content extracted"}...
-              </div>
-
-              <div
-                style={{
-                  marginTop: "8px",
-                  display: "flex",
-                  gap: "6px",
-                  flexWrap: "wrap",
-                }}
-              >
-                {(bookmark.tags ?? []).map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => setSelectedTag(tag)}
-                  style={{
-                    background: "#222",
-                    color: "#fff",
-                    border: "none",
-                    padding: "4px 8px",
-                    borderRadius: "12px",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
-                >
-                  {tag}
-                </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() =>
-                  handleDelete(bookmark.id)
-                }
-              >
-                Delete
-              </button>
-              
-              {selectedTag && (
-              <div
-                style={{
-                  marginTop: "10px",
-                  marginBottom: "10px",
-                }}
-              >
-                Filtering by:
-
-                <button
-                  onClick={() =>
-                    setSelectedTag(null)
-                  }
-                  style={{
-                    marginLeft: "8px",
-                  }}
-                >
-                  {selectedTag} ✕
-                </button>
-              </div>
-            )}
-            </div>
+              bookmark={bookmark}
+              onDelete={handleDelete}
+              onSelectTag={setSelectedTag}
+            />
+            
           ))
         )}
+        <hr
+          style={{
+            margin: "20px 0",
+            borderColor: "#333",
+          }}
+        />
+
+        <ChatPanel bookmarks={bookmarks} />
       </div>
     </div>
   );
