@@ -1,3 +1,4 @@
+import { sendMessageToAI } from "../ai/api";
 import { askSecondBrain } from "../ai/chatService";
 import { generateAnswer } from "../ai/answer";
 import { retrieveBookmarks } from "../ai/retrieve";
@@ -16,31 +17,27 @@ type Props = {
 export default function ChatPanel({ bookmarks }: Props) {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   console.log(bookmarks);
-async function handleSend(text: string){
+async function handleSend(text: string) {
     const userMessage: ChatMessageType = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: text,
-      timestamp: Date.now(),
-    };
+    id: crypto.randomUUID(),
+    role: "user",
+    content: text,
+    timestamp: Date.now(),
+  };
 
-    const answer = await askSecondBrain(
-      text,
-      bookmarks
-    );
+    setMessages((prev) => [...prev, userMessage]);
+
+    const answer = await sendMessageToAI(text);
 
     const assistantMessage: ChatMessageType = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content: answer,
-      timestamp: Date.now(),
-    };
-        setMessages((prev) => [
-          ...prev,
-          userMessage,
-          assistantMessage,
-        ]);
-      }
+    id: crypto.randomUUID(),
+    role: "assistant",
+    content: answer,
+    timestamp: Date.now(),
+  };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+  }
 
   return (
     <div
